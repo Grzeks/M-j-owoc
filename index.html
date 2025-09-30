@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mój owoc</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.png" />
+  <meta name="theme-color" content="#222" />
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mój owoc" />
+  <link rel="apple-touch-icon" href="icon.png" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 1em;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 1.4em;
+      margin-bottom: 0.5em;
+    }
+
+    label, select {
+      font-size: 1em;
+      margin-right: 0.5em;
+    }
+
+    .summary {
+      font-size: 1.2em;
+      margin: 1em 0;
+    }
+
+    .summary .highlight {
+      font-weight: bold;
+      font-size: 1.5em;
+      display: block;
+    }
+
+    .summary.green .highlight { color: #4caf50; }
+    .summary.orange .highlight { color: #ff9800; }
+    .summary.red .highlight { color: #f44336; }
+
+    form { margin: 1em 0; }
+
+    input {
+      font-size: 1em;
+      padding: 0.4em;
+      margin-right: 0.5em;
+    }
+
+    button {
+      font-size: 1em;
+      padding: 0.5em 1em;
+      background: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+    }
+
+    table { width: 100%; margin-top: 1em; border-collapse: collapse; }
+
+    td {
+      padding: 0.5em;
+      border-bottom: 1px solid #444;
+    }
+
+    tr.editing td { background: #222; }
+
+    .delete-btn {
+      display: none;
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 0.2em 0.6em;
+      margin-left: 0.5em;
+      border-radius: 3px;
+    }
+
+    tr.editing .delete-btn { display: inline; }
+  </style>
+</head>
+<body>
+  <h1>🍍 Mój owoc – <span id="month-title"></span></h1>
+
+  <label for="month-select">Miesiąc:</label>
+  <select id="month-select"></select>
+
+  <div class="summary red" id="summary">
+    <div><strong>Suma godzin w miesiącu:</strong> <span class="highlight" id="total-month">0:00</span></div>
+    <div><strong>Pozostało do celu:</strong> <span id="left-to-goal">0:00</span></div>
+    <div><strong>Średnio dziennie potrzeba:</strong> <span id="avg-daily">0:00</span></div>
+  </div>
+
+  <form id="form">
+    <input type="datetime-local" id="datetime" required />
+    <input type="time" id="czas" required />
+    <button type="submit">Zapisz</button>
+  </form>
+
+  <table>
+    <tbody id="entries"></tbody>
+  </table>
+
+  <script src="main.js"></script>
+</body>
+</html>
