@@ -89,11 +89,21 @@ function render() {
     sum += h * 60 + m;
   });
 
+  // suma i pozostały cel
   totalMonth.innerText = formatTime(sum);
   leftToGoal.innerText = formatTime(MONTHLY_GOAL * 60 - sum);
 
-  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-  const avgMinutes = Math.max(0, Math.ceil((MONTHLY_GOAL * 60 - sum) / daysInMonth));
+  // faktyczna liczba dni do końca miesiąca (włącznie z dzisiejszym)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-11
+  const today = now.getDate();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysLeft = daysInMonth - today + 1;
+
+  const remainingMinutes = Math.max(0, MONTHLY_GOAL * 60 - sum);
+  const avgMinutes = daysLeft > 0 ? Math.ceil(remainingMinutes / daysLeft) : 0;
+
   avgDaily.innerText = formatTime(avgMinutes);
 
   // Kolor sumy godzin w miesiącu
@@ -104,7 +114,7 @@ function render() {
   } else {
     totalMonth.style.color = "red";
   }
-} // ← ten nawias był brakujący
+}
 
 // --- edycja wpisu ---
 function editEntry(entry) {
@@ -228,6 +238,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
