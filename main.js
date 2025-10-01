@@ -49,7 +49,7 @@ async function apiPost(body = {}) {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
-      // usuń nagłówek application/json
+      // UWAGA: bez Content-Type, żeby uniknąć preflight CORS
       body: JSON.stringify(body)
     });
     return safeJson(res);
@@ -67,12 +67,22 @@ function render() {
   entries.forEach(e => {
     const div = document.createElement("div");
     div.className = "entry";
+
     const d = new Date(e.date);
     const dateStr =
       d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) +
       ", " +
       d.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
-    div.innerHTML = `${dateStr} <strong>${e.time}</strong>`;
+
+    div.innerHTML = `
+      ${dateStr} <strong>${e.time}</strong>
+      <button class="edit-btn">✏️</button>
+      <button class="delete-btn">🗑️</button>
+    `;
+
+    div.querySelector(".edit-btn").addEventListener("click", () => editEntry(e));
+    div.querySelector(".delete-btn").addEventListener("click", () => deleteEntry(e));
+
     entriesDiv.appendChild(div);
 
     const [h, m] = e.time.split(":").map(Number);
@@ -83,6 +93,57 @@ function render() {
   leftToGoal.innerText = formatTime(MONTHLY_GOAL * 60 - sum);
   const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   avgDaily.innerText = formatTime(Math.max(0, Math.ceil((MONTHLY_GOAL * 60 - sum) / daysInMonth)));
+}
+
+// --- edycja wpisu ---
+function editEntry(entry) {
+  datetimeInput.value = entry.date;
+  czasInput.value = entry.time;
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const newDate = datetimeInput.value;
+    const newTime = czasInput.value;
+
+    const res = await apiPost({
+      action: "update",
+      sheet: currentMonth,
+      id: entry.id,
+      date: newDate,
+      time: newTime
+    });
+
+    if (res.ok) {
+      const idx = entries.findIndex(x => x.id === entry.id);
+      if (idx >= 0) entries[idx] = res.data;
+      localStorage.setItem(currentMonth, JSON.stringify(entries));
+      render();
+    } else {
+      alert("Nie udało się zaktualizować");
+    }
+
+    form.reset();
+    form.onsubmit = defaultSubmit; // przywróć domyślną obsługę
+  };
+}
+
+// --- usuwanie wpisu ---
+async function deleteEntry(entry) {
+  if (!confirm("Na pewno usunąć ten wpis?")) return;
+
+  const res = await apiPost({
+    action: "delete",
+    sheet: currentMonth,
+    id: entry.id
+  });
+
+  if (res.ok) {
+    entries = entries.filter(x => x.id !== entry.id);
+    localStorage.setItem(currentMonth, JSON.stringify(entries));
+    render();
+  } else {
+    alert("Nie udało się usunąć");
+  }
 }
 
 // --- inicjalizacja ---
@@ -113,7 +174,6 @@ async function loadMonths() {
 }
 
 async function loadEntries() {
-  // UWAGA: backend oczekuje parametru sheet, nie month
   const data = await apiGet({ action: "list", sheet: currentMonth });
   if (!data.ok) {
     const offline = localStorage.getItem(currentMonth);
@@ -126,29 +186,26 @@ async function loadEntries() {
   render();
 }
 
-// --- obsługa formularza ---
-form.addEventListener("submit", async (e) => {
+// --- obsługa formularza (domyślna: create) ---
+async function defaultSubmit(e) {
   e.preventDefault();
   const datetime = datetimeInput.value;
   const czas = czasInput.value;
   if (!datetime || !czas) return;
 
-  const newEntry = { date: datetime, time: czas };
-
   const res = await apiPost({ action: "create", sheet: currentMonth, date: datetime, time: czas });
   if (res.ok) {
-    entries.push(newEntry);
+    entries.push(res.data);
     localStorage.setItem(currentMonth, JSON.stringify(entries));
     render();
   } else {
-    alert("Nie udało się zapisać: " + (res.raw || "Offline"));
-    entries.push(newEntry);
-    localStorage.setItem(currentMonth, JSON.stringify(entries));
-    render();
+    alert("Nie udało się zapisać");
   }
 
   form.reset();
-});
+}
+
+form.addEventListener("submit", defaultSubmit);
 
 // --- zmiana miesiąca ---
 monthSelect.addEventListener("change", () => {
@@ -159,6 +216,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
