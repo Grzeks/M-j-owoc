@@ -69,10 +69,11 @@ function render() {
     div.className = "entry";
 
     const d = new Date(e.date);
-    const dateStr =
-      d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) +
-      ", " +
-      //***d.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });***//
+    const dateStr = d.toLocaleDateString("pl-PL", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
 
     div.innerHTML = `
       ${dateStr} <strong>${e.time}</strong>
@@ -238,6 +239,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
