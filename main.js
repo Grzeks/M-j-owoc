@@ -89,10 +89,20 @@ function render() {
     sum += h * 60 + m;
   });
 
-  totalMonth.innerText = formatTime(sum);
-  leftToGoal.innerText = formatTime(MONTHLY_GOAL * 60 - sum);
-  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-  avgDaily.innerText = formatTime(Math.max(0, Math.ceil((MONTHLY_GOAL * 60 - sum) / daysInMonth)));
+totalMonth.innerText = formatTime(sum);
+leftToGoal.innerText = formatTime(MONTHLY_GOAL * 60 - sum);
+
+const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+const avgMinutes = Math.max(0, Math.ceil((MONTHLY_GOAL * 60 - sum) / daysInMonth));
+avgDaily.innerText = formatTime(avgMinutes);
+
+// Kolor sumy godzin w miesiącu
+if (avgMinutes <= 60) {
+  totalMonth.style.color = "green";
+} else if (avgMinutes <= 120) {
+  totalMonth.style.color = "orange";
+} else {
+  totalMonth.style.color = "red";
 }
 
 // --- edycja wpisu ---
@@ -217,6 +227,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
