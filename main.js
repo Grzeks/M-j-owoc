@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbx97zY6EBYGH-yxHofy1fzIbxghwbfm4UHjySiFZyJ82smQdvQY0yeZxCsNDJ5TensD2w/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx97zY6EBYGH-yxHofy1fzIbxghwbfm4UHjySiFZyJ82smQdvQY0yeZxCsNDJ5TensD2w/dev";
 
 const monthSelect = document.getElementById("month-select");
 const monthTitle = document.getElementById("month-title");
@@ -166,3 +166,4 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
