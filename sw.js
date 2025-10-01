@@ -11,7 +11,6 @@ const STATIC_ASSETS = [
   "./icon-512.png",
 ];
 
-
 // Instalacja SW – cache statycznych plików
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -30,10 +29,13 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch – tryb offline-first dla statycznych plików, network-first dla API
+// Fetch – tylko GET, ignoruj POST (np. do backendu)
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
+
+  // ignoruj POST – nie przechwytuj zapisów do backendu
+  if (req.method !== "GET") return;
 
   // statyczne pliki (offline-first)
   if (STATIC_ASSETS.some((asset) => url.pathname.endsWith(asset) || url.pathname === "/")) {
@@ -47,7 +49,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // domyślnie
+  // domyślnie – fallback
   event.respondWith(fetch(req).catch(() => caches.match(req)));
 });
 
