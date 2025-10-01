@@ -49,8 +49,7 @@ async function apiPost(body = {}) {
   try {
     const res = await fetch(API_URL, {
       method: "POST",
-      // headers: { "Content-Type": "application/json" }, // usuń to
-      // lub: headers: { "Content-Type": "text/plain" },
+      // usuń nagłówek application/json
       body: JSON.stringify(body)
     });
     return safeJson(res);
@@ -160,6 +159,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
