@@ -205,7 +205,8 @@ async function defaultSubmit(e) {
   form.reset();
 }
 
-form.addEventListener("submit", defaultSubmit);
+form.onsubmit = defaultSubmit; // zamiast addEventListener
+
 
 // --- zmiana miesiąca ---
 monthSelect.addEventListener("change", () => {
@@ -216,6 +217,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
