@@ -45,14 +45,7 @@ async function apiGet(params = {}) {
 }
 
 async function apiPost(body = {}) {
-  // mapowanie akcji z frontu → backend
-  if (body.action === "add") body.action = "create";
-  if (body.entry) {
-    body.date = body.entry.date;
-    body.time = body.entry.time;
-    delete body.entry;
-  }
-
+  console.log("POST →", API_URL, body); // <--- dodaj to
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -166,6 +159,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
