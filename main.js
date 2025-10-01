@@ -45,11 +45,12 @@ async function apiGet(params = {}) {
 }
 
 async function apiPost(body = {}) {
-  console.log("POST →", API_URL, body); // <--- dodaj to
+  console.log("POST →", API_URL, body);
   try {
     const res = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      // headers: { "Content-Type": "application/json" }, // usuń to
+      // lub: headers: { "Content-Type": "text/plain" },
       body: JSON.stringify(body)
     });
     return safeJson(res);
@@ -159,6 +160,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
