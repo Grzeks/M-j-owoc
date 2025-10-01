@@ -45,6 +45,14 @@ async function apiGet(params = {}) {
 }
 
 async function apiPost(body = {}) {
+  // mapowanie akcji z frontu → backend
+  if (body.action === "add") body.action = "create";
+  if (body.entry) {
+    body.date = body.entry.date;
+    body.time = body.entry.time;
+    delete body.entry;
+  }
+
   try {
     const res = await fetch(API_URL, {
       method: "POST",
@@ -67,7 +75,10 @@ function render() {
     const div = document.createElement("div");
     div.className = "entry";
     const d = new Date(e.date);
-    const dateStr = d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) + ", " + d.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    const dateStr =
+      d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+      ", " +
+      d.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
     div.innerHTML = `${dateStr} <strong>${e.time}</strong>`;
     entriesDiv.appendChild(div);
 
@@ -109,7 +120,8 @@ async function loadMonths() {
 }
 
 async function loadEntries() {
-  const data = await apiGet({ action: "list", month: currentMonth });
+  // UWAGA: backend oczekuje parametru sheet, nie month
+  const data = await apiGet({ action: "list", sheet: currentMonth });
   if (!data.ok) {
     const offline = localStorage.getItem(currentMonth);
     entries = offline ? JSON.parse(offline) : [];
@@ -130,7 +142,7 @@ form.addEventListener("submit", async (e) => {
 
   const newEntry = { date: datetime, time: czas };
 
-  const res = await apiPost({ action: "add", month: currentMonth, entry: newEntry });
+  const res = await apiPost({ action: "create", sheet: currentMonth, date: datetime, time: czas });
   if (res.ok) {
     entries.push(newEntry);
     localStorage.setItem(currentMonth, JSON.stringify(entries));
