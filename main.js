@@ -89,21 +89,22 @@ function render() {
     sum += h * 60 + m;
   });
 
-totalMonth.innerText = formatTime(sum);
-leftToGoal.innerText = formatTime(MONTHLY_GOAL * 60 - sum);
+  totalMonth.innerText = formatTime(sum);
+  leftToGoal.innerText = formatTime(MONTHLY_GOAL * 60 - sum);
 
-const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-const avgMinutes = Math.max(0, Math.ceil((MONTHLY_GOAL * 60 - sum) / daysInMonth));
-avgDaily.innerText = formatTime(avgMinutes);
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const avgMinutes = Math.max(0, Math.ceil((MONTHLY_GOAL * 60 - sum) / daysInMonth));
+  avgDaily.innerText = formatTime(avgMinutes);
 
-// Kolor sumy godzin w miesiącu
-if (avgMinutes <= 60) {
-  totalMonth.style.color = "green";
-} else if (avgMinutes <= 120) {
-  totalMonth.style.color = "orange";
-} else {
-  totalMonth.style.color = "red";
-}
+  // Kolor sumy godzin w miesiącu
+  if (avgMinutes <= 60) {
+    totalMonth.style.color = "green";
+  } else if (avgMinutes <= 120) {
+    totalMonth.style.color = "orange";
+  } else {
+    totalMonth.style.color = "red";
+  }
+} // ← ten nawias był brakujący
 
 // --- edycja wpisu ---
 function editEntry(entry) {
@@ -227,6 +228,7 @@ monthSelect.addEventListener("change", () => {
 
 // start
 loadMonths();
+
 
 
 
