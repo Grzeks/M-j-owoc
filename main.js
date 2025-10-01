@@ -1,172 +1,156 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbx97zY6EBYGH-yxHofy1fzIbxghwbfm4UHjySiFZyJ82smQdvQY0yeZxCsNDJ5TensD2w/exec";
 
-// --- Elementy DOM ---
 const monthSelect = document.getElementById("month-select");
 const monthTitle = document.getElementById("month-title");
+const totalMonth = document.getElementById("total-month");
+const leftToGoal = document.getElementById("left-to-goal");
+const avgDaily = document.getElementById("avg-daily");
 const entriesDiv = document.getElementById("entries");
-const totalMonthEl = document.getElementById("total-month");
-const leftGoalEl = document.getElementById("left-to-goal");
-const avgDailyEl = document.getElementById("avg-daily");
 const form = document.getElementById("form");
-const dateInput = document.getElementById("datetime");
-const timeInput = document.getElementById("czas");
+const datetimeInput = document.getElementById("datetime");
+const czasInput = document.getElementById("czas");
 
-// --- Konfiguracja ---
-const GOAL_HOURS = 30;
 let currentMonth = "";
+let entries = [];
+const MONTHLY_GOAL = 30; // godzin
 
-// --- API helper ---
+// --- pomocnicze ---
+function formatTime(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}:${m.toString().padStart(2, "0")}`;
+}
+
+function safeJson(res) {
+  return res.text().then(text => {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.warn("API nie zwróciło JSON:", text);
+      return { ok: false, offline: true, raw: text };
+    }
+  });
+}
+
 async function apiGet(params = {}) {
   const url = new URL(API_URL);
-  Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
-  const res = await fetch(url);
-  return res.json();
+  Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
+  try {
+    const res = await fetch(url);
+    return safeJson(res);
+  } catch (err) {
+    console.error("Błąd GET", err);
+    return { ok: false, offline: true };
+  }
 }
 
 async function apiPost(body = {}) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  return res.json();
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    return safeJson(res);
+  } catch (err) {
+    console.error("Błąd POST", err);
+    return { ok: false, offline: true };
+  }
 }
 
-// --- Rysowanie wpisów ---
-function renderEntries(entries) {
+// --- render ---
+function render() {
   entriesDiv.innerHTML = "";
-  if (!entries.length) {
-    entriesDiv.innerHTML = "<p>Brak wpisów</p>";
+  let sum = 0;
+
+  entries.forEach(e => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    const d = new Date(e.date);
+    const dateStr = d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) + ", " + d.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    div.innerHTML = `${dateStr} <strong>${e.time}</strong>`;
+    entriesDiv.appendChild(div);
+
+    const [h, m] = e.time.split(":").map(Number);
+    sum += h * 60 + m;
+  });
+
+  totalMonth.innerText = formatTime(sum);
+  leftToGoal.innerText = formatTime(MONTHLY_GOAL * 60 - sum);
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  avgDaily.innerText = formatTime(Math.max(0, Math.ceil((MONTHLY_GOAL * 60 - sum) / daysInMonth)));
+}
+
+// --- inicjalizacja ---
+async function loadMonths() {
+  const data = await apiGet({ action: "months" });
+  if (!data.ok) {
+    alert("Błąd pobierania miesięcy");
     return;
   }
-
-  entries.forEach(e => {
-    const row = document.createElement("div");
-    row.className = "entry";
-
-    const date = new Date(e.date);
-    const dateStr = date.toLocaleString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-    row.innerHTML = `
-      <span>${dateStr}</span>
-      <strong>${e.time}</strong>
-    `;
-
-    entriesDiv.appendChild(row);
+  monthSelect.innerHTML = "";
+  data.data.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    monthSelect.appendChild(opt);
   });
 
-  updateSummary(entries);
-}
-
-// --- Podsumowanie ---
-function updateSummary(entries) {
-  let totalMinutes = 0;
-  entries.forEach(e => {
-    const [h, m] = e.time.split(":").map(Number);
-    totalMinutes += h * 60 + m;
-  });
-
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  totalMonthEl.textContent = `${hours}:${minutes.toString().padStart(2, "0")}`;
-
-  const left = GOAL_HOURS * 60 - totalMinutes;
-  if (left > 0) {
-    const lh = Math.floor(left / 60);
-    const lm = left % 60;
-    leftGoalEl.textContent = `${lh}:${lm.toString().padStart(2, "0")}`;
-
-    const daysLeft = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth() + 1,
-      0
-    ).getDate() - new Date().getDate() + 1;
-
-    const avg = Math.ceil(left / daysLeft);
-    const ah = Math.floor(avg / 60);
-    const am = avg % 60;
-    avgDailyEl.textContent = `${ah}:${am.toString().padStart(2, "0")}`;
+  const now = new Date();
+  const monthName = now.toLocaleString("pl-PL", { month: "long", year: "numeric" });
+  if (data.data.includes(monthName)) {
+    currentMonth = monthName;
   } else {
-    leftGoalEl.textContent = "0:00";
-    avgDailyEl.textContent = "0:00";
+    currentMonth = data.data[data.data.length - 1];
   }
+  monthSelect.value = currentMonth;
+  monthTitle.innerText = currentMonth;
+  loadEntries();
 }
 
-// --- Ładowanie miesięcy ---
-async function loadMonths() {
-  try {
-    const res = await apiGet({ action: "months" });
-    if (!res.ok) throw new Error("Błąd API (months)");
-
-    monthSelect.innerHTML = "";
-    res.data.forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m;
-      monthSelect.appendChild(opt);
-    });
-
-    // ustawiamy aktualny miesiąc
-    const now = new Date();
-    const monthName = now.toLocaleString("pl-PL", { month: "long" });
-    const current = `${monthName} ${now.getFullYear()}`;
-    currentMonth = res.data.includes(current) ? current : res.data[0];
-
-    monthSelect.value = currentMonth;
-    monthTitle.textContent = currentMonth;
-
-    loadEntries(currentMonth);
-  } catch (err) {
-    alert("Błąd pobierania miesięcy: " + err.message);
+async function loadEntries() {
+  const data = await apiGet({ action: "list", month: currentMonth });
+  if (!data.ok) {
+    const offline = localStorage.getItem(currentMonth);
+    entries = offline ? JSON.parse(offline) : [];
+    alert("Błąd pobierania wpisów (offline)");
+  } else {
+    entries = data.data;
+    localStorage.setItem(currentMonth, JSON.stringify(entries));
   }
+  render();
 }
 
-// --- Ładowanie wpisów ---
-async function loadEntries(month) {
-  try {
-    const res = await apiGet({ action: "list", sheet: month });
-    if (!res.ok) throw new Error("Błąd API (list)");
-    renderEntries(res.data);
-  } catch (err) {
-    alert("Błąd pobierania wpisów: " + err.message);
-  }
-}
-
-// --- Zapis nowego wpisu ---
+// --- obsługa formularza ---
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const dateVal = dateInput.value;
-  const timeVal = timeInput.value;
-  if (!dateVal || !timeVal) return;
+  const datetime = datetimeInput.value;
+  const czas = czasInput.value;
+  if (!datetime || !czas) return;
 
-  try {
-    const res = await apiPost({
-      action: "create",
-      sheet: currentMonth,
-      date: dateVal,
-      time: timeVal
-    });
-    if (!res.ok) throw new Error("Błąd API (create)");
+  const newEntry = { date: datetime, time: czas };
 
-    loadEntries(currentMonth);
-    form.reset();
-  } catch (err) {
-    alert("Nie udało się zapisać: " + err.message);
+  const res = await apiPost({ action: "add", month: currentMonth, entry: newEntry });
+  if (res.ok) {
+    entries.push(newEntry);
+    localStorage.setItem(currentMonth, JSON.stringify(entries));
+    render();
+  } else {
+    alert("Nie udało się zapisać: " + (res.raw || "Offline"));
+    entries.push(newEntry);
+    localStorage.setItem(currentMonth, JSON.stringify(entries));
+    render();
   }
+
+  form.reset();
 });
 
-// --- Zmiana miesiąca ---
+// --- zmiana miesiąca ---
 monthSelect.addEventListener("change", () => {
   currentMonth = monthSelect.value;
-  monthTitle.textContent = currentMonth;
-  loadEntries(currentMonth);
+  monthTitle.innerText = currentMonth;
+  loadEntries();
 });
 
-// --- Start ---
+// start
 loadMonths();
